@@ -166,24 +166,21 @@ public class UserDao extends BaseDao {
 
 
    void updateUser(User user) {
-       // Determine if homeUrl is null and prepare parameters accordingly
-       Object homeUrlParam = user.getHomeUrl();
-       if (homeUrlParam == null) {
-           homeUrlParam = new Object() {
+       Object homeUrl = user.getHomeUrl();
+       if (homeUrl == null) {
+           homeUrl = new Object() {
                @Override
                public String toString() {
-                   // This will ensure the prepared statement treats it as a NULL of type VARCHAR
                    return null;
                }
            };
        }
 
 
-       // Update the prepared statement to handle null homeUrl appropriately
        ejt.update(
                USER_UPDATE,
                new Object[] { user.getUsername(), user.getPassword(), user.getEmail(), user.getPhone(),
-                       boolToChar(user.isAdmin()), boolToChar(user.isDisabled()), homeUrlParam,
+                       boolToChar(user.isAdmin()), boolToChar(user.isDisabled()), homeUrl,
                        user.getReceiveAlarmEmails(), boolToChar(user.isReceiveOwnAuditEvents()), user.getId() },
                new int[] {Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR,
 
@@ -195,12 +192,10 @@ public class UserDao extends BaseDao {
 
 
    private void saveRelationalData(final User user) {
-       // Delete existing permissions.
        ejt.update("delete from dataSourceUsers where userId=?", new Object[] { user.getId() });
        ejt.update("delete from dataPointUsers where userId=?", new Object[] { user.getId() });
 
 
-       // Save the new ones.
        ejt.batchUpdate("insert into dataSourceUsers (dataSourceId, userId) values (?,?)",
                new BatchPreparedStatementSetter() {
                    public int getBatchSize() {

@@ -109,7 +109,6 @@ public class UsersDwr extends BaseDwr {
 
         User user;
         if (!isValidPassword(password)) {
-        // Password does not meet complexity requirements
             DwrResponseI18n response = new DwrResponseI18n();
             response.addMessage(new LocalizableMessage("users.validate.passwordComplexity"));
             return response;
@@ -154,7 +153,6 @@ public class UsersDwr extends BaseDwr {
             userDao.saveUser(user);
 
             if (currentUser.getId() == id)
-                // Update the user object in session too. Why not?
                 Common.setUser(request, user);
 
             response.addData("userId", user.getId());
@@ -174,7 +172,6 @@ public class UsersDwr extends BaseDwr {
         User updateUser = userDao.getUser(id);
 
         if (!StringUtils.isEmpty(password) && !isValidPassword(password)) {
-        // Password does not meet complexity requirements
             DwrResponseI18n response = new DwrResponseI18n();
             response.addMessage(new LocalizableMessage("users.validate.passwordComplexity"));
             return response;
@@ -192,8 +189,6 @@ public class UsersDwr extends BaseDwr {
 
         if (!response.getHasMessages()) {
             userDao.saveUser(user);
-
-            // Update the user object in session too. Why not?
             Common.setUser(request, updateUser);
         }
 
@@ -224,7 +219,6 @@ public class UsersDwr extends BaseDwr {
         User currentUser = Common.getUser();
 
         if (currentUser.getId() == id)
-            // You can't delete yourself.
             response.addMessage(new LocalizableMessage("users.validate.badDelete"));
         else
             new UserDao().deleteUser(id);
@@ -232,7 +226,6 @@ public class UsersDwr extends BaseDwr {
         return response;
     }
     private boolean isValidPassword(String password) {
-    // Password must contain at least one special character, one number, and one capital letter
         return password.matches("^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[@#$%^&+=!]).{8,}$");
     }
 }
