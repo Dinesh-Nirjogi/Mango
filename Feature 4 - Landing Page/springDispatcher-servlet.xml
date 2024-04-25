@@ -19,16 +19,29 @@
 -->
 
 <!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<!--
+  - Application context definition for DispatcherServlet.
+  -->
 <beans>
+  
+  <!-- View resolver -->
   <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
     <property name="viewClass"><value>org.springframework.web.servlet.view.JstlView</value></property>
     <property name="prefix"><value>/WEB-INF/jsp/</value></property>
     <property name="suffix"><value>.jsp</value></property>
   </bean>
+  
+  <!-- Default message code resolver -->
   <bean id="defaultMessageCodeResolver" class="com.serotonin.propertyEditor.DefaultMessageCodesResolver"/>
+  
+  <!-- 
+      URL mappings to controllers
+  -->
   <bean id="publicUrlMappings" class="org.springframework.web.servlet.handler.SimpleUrlHandlerMapping">
     <property name="mappings">
       <props>
+        <!-- All user URLs -->
         <prop key="/compound_events.shtm">compoundEventsController</prop>
         <prop key="/data_point_details.shtm">dataPointDetailsController</prop>
         <prop key="/data_point_edit.shtm">dataPointEditController</prop>
@@ -38,7 +51,6 @@
         <prop key="/event_handlers.shtm">eventHandlersController</prop>
         <prop key="/events.shtm">eventsController</prop>
         <prop key="/help.shtm">helpController</prop>
-        <prop key="/landing_page.shtm">landingPageController</prop>
         <prop key="/login.htm">loginController</prop>
         <prop key="/logout.htm">logoutController</prop>
         <prop key="/mailing_lists.shtm">mailingListsController</prop>
@@ -57,7 +69,10 @@
         <prop key="/views.shtm">viewsController</prop>
         <prop key="/view_edit.shtm">viewEditController</prop>
         <prop key="/watch_list.shtm">watchListController</prop>
+        <prop key="/landing_page.shtm">landingPageController</prop>
         <prop key="/webcam_live_feed.htm">webcamLiveFeedController</prop>
+        
+        <!-- Mobile user URLs -->
         <prop key="/mobile_login.htm">mobileLoginController</prop>
         <prop key="/mobile_logout.htm">mobileLogoutController</prop>
         <prop key="/mobile_watch_list.shtm">mobileWatchListController</prop>
@@ -70,6 +85,11 @@
       </list>
     </property>
   </bean>
+  
+  <!--
+     Controllers
+  -->
+  <!-- Public Controllers -->
   <bean id="compoundEventsController" class="org.springframework.web.servlet.mvc.ParameterizableViewController">
     <property name="viewName"><value>compoundEvents</value></property>
   </bean>
@@ -110,10 +130,6 @@
   
   <bean id="helpController" class="org.springframework.web.servlet.mvc.ParameterizableViewController">
     <property name="viewName"><value>help</value></property>
-  </bean>
-
-  <bean id="landingPageController" class="com.serotonin.mango.web.mvc.controller.LandingPageController">
-    <property name="viewName"><value>landingPage</value></property>
   </bean>
   
   <bean id="loginController" class="com.serotonin.mango.web.mvc.controller.LoginController">
@@ -213,13 +229,22 @@
   <bean id="watchListController" class="com.serotonin.mango.web.mvc.controller.WatchListController">
     <property name="viewName"><value>watchList</value></property>
   </bean>
+
+  <bean id="landingPageController" class="com.serotonin.mango.web.mvc.controller.LandingPageController">
+    <property name="viewName"><value>landingPage</value></property>
+  </bean>
   
   <bean id="webcamLiveFeedController" class="com.serotonin.mango.web.mvc.controller.WebcamLiveFeedController">
     <property name="viewName"><value>webcamLiveFeed</value></property>
   </bean>
+  
+  
+  
+  <!-- Multipart resolver -->
   <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
     <property name="maxUploadSize"><value>5000000</value></property>
   </bean>
   
+  <!-- Interceptors -->
   <bean id="commonData" class="com.serotonin.mango.web.mvc.interceptor.CommonDataInterceptor"/>
 </beans>

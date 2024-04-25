@@ -19,7 +19,7 @@
 <%@ include file="/WEB-INF/jsp/include/tech.jsp" %>
 <%@page import="com.serotonin.mango.Common"%>
 <%@page import="com.serotonin.mango.view.ShareUser"%>
-<tag:page dwr="WatchListDwr" js="view" onload="init">
+<tag:page dwr="LandingPageDwr" js="view" onload="init">
   <jsp:attribute name="styles">
     <style>
     html > body .dojoTreeNodeLabelSelected {
@@ -55,13 +55,13 @@
       dojo.require("dojo.widget.SplitContainer");
       dojo.require("dojo.widget.ContentPane");
       mango.view.initWatchlist();
-      mango.share.dwr = WatchListDwr;
+      mango.share.dwr = LandingPageDwr;
       var owner;
       var pointNames = {};
       var watchlistChangeId = 0;
       
       function init() {
-          WatchListDwr.init(function(data) {
+          LandingPageDwr.init(function(data) {
               mango.share.users = data.shareUsers;
               
               // Create the point tree.
@@ -79,10 +79,11 @@
               show("treeDiv");
               
               addPointNames(rootFolder);
+              
+              // Add default points.
               displayWatchList(data.selectedWatchList);
               maybeDisplayDeleteImg();
           });
-          WatchListDwr.getDateRangeDefaults(<c:out value="<%= Common.TimePeriods.DAYS %>"/>, 1, function(data) { setDateRange(data); });
           var handler = new TreeClickHandler();
           dojo.event.topic.subscribe("tree/titleClick", handler, 'titleClick');
           dojo.event.topic.subscribe("tree/expand", handler, 'expand');
@@ -106,7 +107,9 @@
       }
       
       function populateFolder(folderNode, lazyLoadData) {
-          folderNode.isExpanded = false;  
+          // Turn this off so as not to confuse the tree node.
+          folderNode.isExpanded = false;
+          
           var i;
           for (i=0; i<lazyLoadData.subfolders.length; i++)
               addFolder(lazyLoadData.subfolders[i], folderNode);
@@ -201,7 +204,7 @@
           var name = $get("newWatchListName");
           var select = $("watchListSelect");
           select.options[select.selectedIndex].text = name;
-          WatchListDwr.updateWatchListName(name);
+          LandingPageDwr.updateWatchListName(name);
           hideLayer("wlEdit");
       }
       
@@ -213,7 +216,7 @@
           
           watchlistChangeId++;
           var id = watchlistChangeId;
-          WatchListDwr.setSelectedWatchList($get("watchListSelect"), function(data) {
+          LandingPageDwr.setSelectedWatchList($get("watchListSelect"), function(data) {
         	  if (id == watchlistChangeId)
                   displayWatchList(data);
           });
@@ -224,7 +227,7 @@
     	  if (copy)
               copyId = $get("watchListSelect");
     	  
-          WatchListDwr.addNewWatchList(copyId, function(watchListData) {
+          LandingPageDwr.addNewWatchList(copyId, function(watchListData) {
               var wlselect = $("watchListSelect");
               wlselect.options[wlselect.options.length] = new Option(watchListData.value, watchListData.key);
               $set(wlselect, watchListData.key);
@@ -239,7 +242,7 @@
           wlselect.options[wlselect.selectedIndex] = null;
           
           watchListChanged();
-          WatchListDwr.deleteWatchList(deleteId);
+          LandingPageDwr.deleteWatchList(deleteId);
           maybeDisplayDeleteImg();
       }
       
@@ -277,7 +280,7 @@
           if ($("p"+ pointId) || !owner)
               return;
           addToWatchListImpl(pointId);
-          WatchListDwr.addToWatchList(pointId, mango.view.watchList.setDataImpl);
+          LandingPageDwr.addToWatchList(pointId, mango.view.watchList.setDataImpl);
           fixRowFormatting();
       }
       
@@ -304,7 +307,7 @@
       function removeFromWatchList(pointId) {
           removeFromWatchListImpl(pointId);
           fixRowFormatting();
-          WatchListDwr.removeFromWatchList(pointId);
+          LandingPageDwr.removeFromWatchList(pointId);
       }
       
       function removeFromWatchListImpl(pointId) {
@@ -343,7 +346,7 @@
                   watchListTable.append(rows[i]);
               else
                   watchListTable.insertBefore(rows[i], rows[i+2]);
-              WatchListDwr.moveDown(pointId.substring(1));
+              LandingPageDwr.moveDown(pointId.substring(1));
               fixRowFormatting();
           }
       }
@@ -358,7 +361,7 @@
           }
           if (i != 0) {
               watchListTable.insertBefore(rows[i], rows[i-1]);
-              WatchListDwr.moveUp(pointId.substring(1));
+              LandingPageDwr.moveUp(pointId.substring(1));
               fixRowFormatting();
           }
       }
@@ -388,89 +391,24 @@
               }
           }
       }
-      
-      function showChart(mangoId, event, source) {
-    	  if (isMouseLeaveOrEnter(event, source)) {
-              // Take the data in the chart textarea and put it into the chart layer div
-              $set('p'+ mangoId +'ChartLayer', $get('p'+ mangoId +'Chart'));
-              showMenu('p'+ mangoId +'ChartLayer', 4, 12);
-    	  }
-      }
-      
-      function hideChart(mangoId, event, source) {
-          if (isMouseLeaveOrEnter(event, source))
-        	  hideLayer('p'+ mangoId +'ChartLayer');
-      }
-      
-      //
-      // Image chart
-      //
-      function getImageChart() {
-          var width = dojo.html.getContentBox($("imageChartDiv")).width - 20;
-          startImageFader($("imageChartImg"));
-          WatchListDwr.getImageChartData(getChartPointList(), $get("fromYear"), $get("fromMonth"), $get("fromDay"), 
-        		  $get("fromHour"), $get("fromMinute"), $get("fromSecond"), $get("fromNone"), $get("toYear"), 
-        		  $get("toMonth"), $get("toDay"), $get("toHour"), $get("toMinute"), $get("toSecond"), $get("toNone"), 
-        		  width, 350, function(data) {
-              $("imageChartDiv").innerHTML = data;
-              stopImageFader($("imageChartImg"));
-              
-              // Make sure the length of the chart doesn't mess up the watch list display. Do async to
-              // make sure the rendering gets done.
-              setTimeout('dojo.widget.manager.getWidgetById("splitContainer").onResized()', 2000);
-          });
-      }
-      
-      function getChartData() {
-    	  var pointIds = getChartPointList();
-    	  if (pointIds.length == 0)
-    		  alert("<fmt:message key="watchlist.noExportables"/>");
-    	  else {
-              startImageFader($("chartDataImg"));
-              WatchListDwr.getChartData(getChartPointList(), $get("fromYear"), $get("fromMonth"), $get("fromDay"), 
-                      $get("fromHour"), $get("fromMinute"), $get("fromSecond"), $get("fromNone"), $get("toYear"), 
-                      $get("toMonth"), $get("toDay"), $get("toHour"), $get("toMinute"), $get("toSecond"), $get("toNone"), 
-                      function(data) {
-                  stopImageFader($("chartDataImg"));
-                  window.location = "chartExport/watchListData.csv";
-              });
-    	  }
-      }
-      
-      function getChartPointList() {
-          var pointIds = $get("chartCB");
-          for (var i=pointIds.length-1; i>=0; i--) {
-              if (pointIds[i] == "_TEMPLATE_") {
-                  pointIds.splice(i, 1);
-              }
-          }
-          return pointIds;
-      }
-      
+            
       //
       // Create report
       function createReport() {
           window.location = "reports.shtm?wlid="+ $get("watchListSelect");
       }
     </script>
-    <h1>Welcome to Mango</h1>
+    
     <table width="100%">
     <tr><td>
       <div dojoType="SplitContainer" orientation="horizontal" sizerWidth="3" activeSizing="true" class="borderDiv"
               widgetId="splitContainer" style="width: 100%; height: 500px;">
         <div dojoType="ContentPane" sizeMin="20" sizeShare="20" style="overflow:auto;padding:2px;">
-            <div style = "display: none;">
-                <span class="smallTitle"><fmt:message key="watchlist.points"/></span> <tag:help id="watchListPoints"/><br/>
-                <img src="images/hourglass.png" id="loadingImg"/>
-                <div id="treeDiv" style="display:none;"><div dojoType="Tree" widgetId="tree"></div></div>
-            </div>
-            <h1>Mango Information</h1>
-            <p>Welcome to Mango M2M. This is an example of what can be here. This could inclue links to pages like the. For help, click <a href="${pageContext.request.contextPath}/help.shtm">here</a></p>
-            <h3>Features</h3>
-            <h5>FR4</h5>
-            <h5>FR7 (More Charts)</h5>
-            <p>Click on the link <a href="${pageContext.request.contextPath}/reports.shtm">Reports</a>, navigate t report charts</p>
-            <img src="images/sensors.png" alt="sensors" style="width:350px;height:400px;">
+          <span class="smallTitle"><fmt:message key="landingpage.Welcome"/></span> <br/>
+          <c:set var="filepath">/WEB-INF/dox/<fmt:message key="dox.dir"/>/welcome.html</c:set>
+          <jsp:include page="${filepath}"/>
+          <img src="images/hourglass.png" id="loadingImg"/>
+          <div id="treeDiv" style="display:none;"><div dojoType="Tree" widgetId="tree"></div></div>          
         </div>
         <div dojoType="ContentPane" sizeMin="50" sizeShare="50" style="overflow:auto; padding:2px 10px 2px 2px;">
           <table cellpadding="0" cellspacing="0" width="100%">
@@ -526,12 +464,6 @@
                                 style="visibility:hidden;top:10px;left:1px;" onmouseout="hideLayer(this);">
                           <tag:img png="hourglass" title="common.gettingData"/>
                         </div></td>
-                        <td id="p_TEMPLATE_ChartMin" style="display:none;" onmouseover="showChart(getMangoId(this), event, this);"
-                                onmouseout="hideChart(getMangoId(this), event, this);"><img alt="" 
-                                src="images/icon_chart.png"/><div id="p_TEMPLATE_ChartLayer" class="labelDiv" 
-                                style="visibility:hidden;top:0;left:0;"></div><textarea
-                                style="display:none;" id="p_TEMPLATE_Chart"><tag:img png="hourglass"
-                                title="common.gettingData"/></textarea></td>
                       </tr>
                     </table>
                   </td>
@@ -539,8 +471,7 @@
                   <td id="p_TEMPLATE_Value" align="center"><img src="images/hourglass.png"/></td>
                   <td id="p_TEMPLATE_Time" align="center"></td>
                   <td style="width:1px; white-space:nowrap;">
-                    <input type="checkbox" name="chartCB" id="p_TEMPLATE_ChartCB" value="_TEMPLATE_" checked="checked"
-                            title="<fmt:message key="watchlist.consolidatedChart"/>"/>
+
                     <tag:img png="icon_comp" title="watchlist.pointDetails"
                             onclick="window.location='data_point_details.shtm?dpid='+ getMangoId(this)"/>
                     <tag:img png="arrow_up_thin" id="p_TEMPLATE_MoveUp" title="watchlist.moveUp" style="display:none;"
@@ -561,26 +492,7 @@
           </div>
         </div>
       </div>
-    </td></tr>
-    
-    <tr><td>
-      <div class="borderDiv" style="width: 100%;">
-        <table width="100%">
-          <tr>
-            <td class="smallTitle"><fmt:message key="watchlist.chart"/> <tag:help id="watchListCharts"/></td>
-            <td align="right"><tag:dateRange/></td>
-            <td>
-              <tag:img id="imageChartImg" png="control_play_blue" title="watchlist.imageChartButton"
-                      onclick="getImageChart()"/>
-              <tag:img id="chartDataImg" png="bullet_down" title="watchlist.chartDataButton"
-                      onclick="getChartData()"/>
-            </td>
-          </tr>
-          <tr><td colspan="3" id="imageChartDiv"></td></tr>
-        </table>
-      </div>
-    </td></tr>
-    
+    </td></tr>    
     </table>
   </jsp:body>
 </tag:page>
