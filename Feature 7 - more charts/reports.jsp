@@ -75,8 +75,7 @@
         reportPointsArray = new Array();
         for (var i=0; i<report.points.length; i++)
             addToReportPointsArray(report.points[i].pointId, report.points[i].colour,
-                    report.points[i].consolidatedChart, report.points[i].charttype, report.points[i].title, 
-                    report.points[i].xtitle, report.points[i].ytitle, report.points[i].yref); // new report properties added as arguments
+                    report.points[i].consolidatedChart, report.points[i].chartType, report.points[i].title, report.points[i].xlabel, report.points[i].ylabel, report.points[i].yref); //new properties added here
         $set("includeEvents", report.includeEvents);
         $set("includeUserComments", report.includeUserComments);
         $set("dateRangeType", report.dateRangeType);
@@ -125,20 +124,22 @@
         writeReportPointsArray();
     }
     
-    function addToReportPointsArray(pointId, colour, consolidatedChart, charttype, title, xtitle, ytitle, yref) {
+    function addToReportPointsArray(pointId, colour, consolidatedChart, chartType, title, xlabel, ylabel, yref) {
         var data = getPointData(pointId);
         if (data) {
+            // Missing names imply that the point was deleted, so ignore.
             reportPointsArray[reportPointsArray.length] = {
                 pointId: pointId,
                 pointName : data.name,
                 pointType : data.dataTypeMessage,
                 colour : !colour ? (!data.chartColour ? "" : data.chartColour) : colour,
                 consolidatedChart : consolidatedChart,
-                charttype : charttype,
+                //new properties added here
+                chartType : chartType,
                 title : !title ? (!data.title ? "" : data.title) : title,
-                xtitle : !xtitle ? (!data.xtitle ? "" : data.xtitle) : xtitle,
-                ytitle : !ytitle ? (!data.ytitle ? "" : data.ytitle) : ytitle,
-                yref : yref
+                xlabel : !xlabel ? (!data.xlabel ? "" : data.xlabel) : xlabel,
+                ylabel : !ylabel ? (!data.ylabel ? "" : data.ylabel) : ylabel,
+                yref : !yref ? (!data.yref ? "" : data.yref) : yref,
             };
         }
     }
@@ -172,31 +173,30 @@
                         return "<input type='checkbox'"+ (data.consolidatedChart ? " checked='checked'" : "") +
                                 " onclick='updatePointConsolidatedChart("+ data.pointId +", this.checked)'/>";
                     },
-                    function(data) {
-                      updatePointcharttype(data.pointId, true)
-                      return "<input type='radio' name='chartType" + data.pointId + "' value='Line'" +
-                      (data.charttype !== 'Scatter' ? " checked='checked'" : "") +
-                      " onchange='updatePointcharttype(" + data.pointId + ", true)'/> Line" +
-                      "<input type='radio' name='chartType" + data.pointId + "' value='Scatter'" +
-                      (data.charttype === 'Scatter' ? " checked='checked'" : "") +
-                      " onchange='updatePointcharttype(" + data.pointId + ", false)'/> Scatter";
+                    //new property input fields added here
+                    function(data){
+                      return"<input type= 'radio' name='chartType" +  data.pointId + "' " + (data.chartType ? " checked='checked'" : "") +
+                        " onchange='updatePointChartType("+ data.pointId +", false)'/>" + "<label for='chartType" + data.pointId +"'> <fmt:message key='reports.Line'/></label>"
+                        +"<input type= 'radio'  name='chartType" +  data.pointId + "' " + (data.chartType ? " checked='checked'" : "") +
+                        " onchange='updatePointChartType("+ data.pointId +", true)'/>" + "<label for='chartType" + data.pointId +"'> <fmt:message key='reports.Scatter'/></label>";
                     },
                     function(data) {
-                            return "<input type='text' maxlength='50' value='"+ data.title +"' "+
-                                    "onblur='updatePointTitle("+ data.pointId +", this.value)'/>";
+                    	    return "<input type='text' value='"+ data.title +"' "+
+                    	            "onchange='updatePointTitle("+ data.pointId +", this.value)'/>";
                     },
                     function(data) {
-                            return "<input type='text' maxlength='50' value='"+ data.xtitle +"' "+
-                                    "onblur='updatePointxtitle("+ data.pointId +", this.value)'/>";
+                    	    return "<input type='text' value='"+ data.xlabel +"' "+
+                    	            "onchange='updatePointXlabel("+ data.pointId +", this.value)'/>";
                     },
                     function(data) {
-                            return "<input type='text' maxlength='50' value='"+ data.ytitle +"' "+
-                                    "onblur='updatePointytitle("+ data.pointId +", this.value)'/>";
+                    	    return "<input type='text' value='"+ data.ylabel +"' "+
+                    	            "onchange='updatePointYlabel("+ data.pointId +", this.value)'/>";
                     },
                     function(data) {
-                            return "<input type='number' maxlength='50' value='"+ data.yref +"' "+
-                                    "onblur='updatePointyref("+ data.pointId +", this.value)'/>";
+                    	    return "<input type='number' value='"+ data.yref +"' "+
+                    	            "onchange='updatePointYref("+ data.pointId +", this.value)'/>";
                     },
+                    
                     function(data) { 
                             return "<img src='images/bullet_delete.png' class='ptr' "+
                                     "onclick='removeFromReportPointsArray("+ data.pointId +")'/>";
@@ -230,35 +230,51 @@
         if (item)
             item["consolidatedChart"] = consolidatedChart;
     }
-
-    function updatePointcharttype(pointId, charttype) {
+    //new update data functions
+    function updatePointChartType(pointId, chartType) {
         var item = getElement(reportPointsArray, pointId, "pointId");
         if (item)
-            item["charttype"] = charttype;
-            console.log(charttype)
+            item["chartType"] = chartType;
     }
-    
+    function updatePointXlabel(pointId, xlabel) {
+        var item = getElement(reportPointsArray, pointId, "pointId");
+        if(xlabel.length>32){window.alert("X Axis Label must not exceed 32 characters!");
+          return;}
+        if(!xlabel.match("^[a-zA-Z0-9_]*$")){window.alert("xaxis label must only contain alphanumeric or _ characters");
+          return;}
+        else{
+          if (item)
+            item["xlabel"] = xlabel;}
+        
+    }
+    function updatePointYlabel(pointId, ylabel) {
+        var item = getElement(reportPointsArray, pointId, "pointId");
+        if(ylabel.length>32){window.alert("Y Axis Label must not exceed 32 characters!");
+          return;}
+        if(!ylabel.match("^[a-zA-Z0-9_]*$")){window.alert("yaxis label must only contain alphanumeric or _ characters");
+          return;}
+        else{
+          if (item)
+            item["ylabel"] = ylabel;}
+    }
     function updatePointTitle(pointId, title) {
         var item = getElement(reportPointsArray, pointId, "pointId");
-        if (item)
-            item["title"] = title;
+        if(title.length>64){window.alert("Title must not exceed 64 characters!");
+          return;}
+        if(!title.match("^[a-zA-Z0-9_]*$")){window.alert("Title must only contain alphanumeric or _ characters");
+          return;}
+        else{
+          if (item)
+            item["title"] = title;}
     }
-    function updatePointxtitle(pointId, xtitle) {
+    function updatePointYref(pointId, yref) {
         var item = getElement(reportPointsArray, pointId, "pointId");
+        //if(!title.match("^-?\\d+(\\.\\d+)?$")){window.alert("YReference Line must only contain float value");
+         // return;}
+        //else{
         if (item)
-            item["xtitle"] = xtitle;
-    }
-    function updatePointytitle(pointId, ytitle) {
-        var item = getElement(reportPointsArray, pointId, "pointId");
-        if (item)
-            item["ytitle"] = ytitle;
-    }
-    function updatePointyref(pointId, yref) {
-        var item = getElement(reportPointsArray, pointId, "pointId");
-        if (item)
-            item["yref"] = yref;
-    }
-    
+          item["yref"] = parseFloat(yref);        
+    }        
     function updatePointsList() {
         dwr.util.removeAllOptions("allPointsList");
         var availPoints = new Array();
@@ -455,8 +471,8 @@
         var points = new Array();
         for (var i=0; i<reportPointsArray.length; i++)
             points[points.length] = { pointId: reportPointsArray[i].pointId, colour: reportPointsArray[i].colour,
-        		    consolidatedChart: reportPointsArray[i].consolidatedChart, charttype: reportPointsArray[i].charttype,
-                title: reportPointsArray[i].title, xtitle: reportPointsArray[i].xtitle, ytitle: reportPointsArray[i].ytitle,
+        		    consolidatedChart: reportPointsArray[i].consolidatedChart, chartType: reportPointsArray[i].chartType, //new properties added here
+                title: reportPointsArray[i].title, xlabel: reportPointsArray[i].xlabel, ylabel: reportPointsArray[i].ylabel,
                 yref: reportPointsArray[i].yref };
         return points;
     }
@@ -644,7 +660,7 @@
                 
                 <table cellspacing="1">
                   <tbody id="reportPointsTableEmpty" style="display:none;">
-                    <tr><th colspan="9"><fmt:message key="reports.noPoints"/></th></tr> 
+                    <tr><th colspan="4"><fmt:message key="reports.noPoints"/></th></tr>
                   </tbody>
                   <tbody id="reportPointsTableHeaders" style="display:none;">
                     <tr class="smRowHeader">
@@ -652,11 +668,11 @@
                       <td><fmt:message key="reports.dataType"/></td>
                       <td><fmt:message key="reports.colour"/></td>
                       <td><fmt:message key="reports.consolidatedChart"/></td>
-                      <td>Chart Type</td>
-                      <td>Title</td>
-                      <td>X Title</td>
-                      <td>Y Title</td>
-                      <td>Y Reference Line Type</td>
+                      <td><fmt:message key="reports.chartType"/></td> <%--new property header keys added here--%>
+                      <td><fmt:message key="reports.title"/></td>
+                      <td><fmt:message key="reports.xLabel"/></td>
+                      <td><fmt:message key="reports.yLabel"/></td>
+                      <td><fmt:message key="reports.yRef"/></td>
                       <td></td>
                     </tr>
                   </tbody>

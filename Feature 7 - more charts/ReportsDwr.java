@@ -91,6 +91,7 @@ public class ReportsDwr extends BaseDwr {
 
         DwrResponseI18n response = new DwrResponseI18n();
 
+        // Basic validation
         validateData(response, name, points, dateRangeType, relativeDateType, previousPeriodCount, pastPeriodCount);
 
         if (schedule) {
@@ -161,9 +162,13 @@ public class ReportsDwr extends BaseDwr {
         report.setZipData(zipData);
         report.setRecipients(recipients);
 
+        // Save the report
         reportDao.saveReport(report);
+
+        // Conditionally schedule the report.
         ReportJob.scheduleReportJob(report);
 
+        // Send back the report id in case this was new.
         response.addData("reportId", report.getId());
         return response;
     }
@@ -178,7 +183,7 @@ public class ReportsDwr extends BaseDwr {
 
         // Basic validation
         validateData(response, name, points, dateRangeType, relativeDateType, previousPeriodCount, pastPeriodCount);
-
+ 
         if (!response.getHasMessages()) {
             ReportVO report = new ReportVO();
             report.setName(name);
