@@ -404,10 +404,11 @@
       <div dojoType="SplitContainer" orientation="horizontal" sizerWidth="3" activeSizing="true" class="borderDiv"
               widgetId="splitContainer" style="width: 100%; height: 500px;">
         <div dojoType="ContentPane" sizeMin="20" sizeShare="20" style="overflow:auto;padding:2px;">
-          <span class="smallTitle"><fmt:message key="landingpage.Welcome"/></span> <br/>
-          <c:set var="filepath">/WEB-INF/dox/<fmt:message key="dox.dir"/>/welcome.html</c:set>
-          <jsp:include page="${filepath}"/>
           <img src="images/hourglass.png" id="loadingImg"/>
+          <p> <strong>Mango M2M is an open-source software platform designed for monitoring, control, and automation of various systems and processes. For more information about mango <a href="help.shtm">click here</a></strong></p>
+            <p><strong>In Mango M2M we can use this to see the data collected by the sensors as watch_list. This link helps us to redirect to the watch page. <a href="watch_list.shtm">click here</a></strong></p>
+        <p><strong>Sensor placement:</strong></p>
+        <img src="images\sensor.jpeg" alt="sensor">
           <div id="treeDiv" style="display:none;"><div dojoType="Tree" widgetId="tree"></div></div>          
         </div>
         <div dojoType="ContentPane" sizeMin="50" sizeShare="50" style="overflow:auto; padding:2px 10px 2px 2px;">
