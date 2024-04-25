@@ -18,7 +18,6 @@
  */
 package com.serotonin.mango.db.dao;
 
-import java.io.PrintWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -26,7 +25,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import org.apache.commons.logging.Log;
 import org.springframework.jdbc.core.RowCallbackHandler;
 
 import com.serotonin.ShouldNeverHappenException;
@@ -46,7 +44,6 @@ import com.serotonin.mango.rt.event.type.EventType;
 import com.serotonin.mango.view.text.TextRenderer;
 import com.serotonin.mango.vo.DataPointVO;
 import com.serotonin.mango.vo.UserComment;
-import com.serotonin.mango.vo.report.ReportCsvStreamer;
 import com.serotonin.mango.vo.report.ReportDataStreamHandler;
 import com.serotonin.mango.vo.report.ReportDataValue;
 import com.serotonin.mango.vo.report.ReportInstance;
@@ -57,13 +54,16 @@ import com.serotonin.util.SerializationHelper;
 import com.serotonin.util.StringUtils;
 import com.serotonin.web.i18n.I18NUtils;
 import com.serotonin.web.taglib.Functions;
-import org.apache.commons.logging.LogFactory;
 
 /**
  * @author Matthew Lohbihler
  */
 public class ReportDao extends BaseDao {
-    private final Log log = LogFactory.getLog(ReportDao.class);
+    // public enum ChartType {
+    //     LINE,
+    //     SCATTER
+    // }
+
     //
     //
     // Report Templates
@@ -200,30 +200,36 @@ public class ReportDao extends BaseDao {
      * This method should only be called by the ReportWorkItem.
      */
     private static final String REPORT_INSTANCE_POINTS_INSERT = "insert into reportInstancePoints " //
-            + "(reportInstanceId, dataSourceName, pointName, dataType, startValue, textRenderer, colour, consolidatedChart, chartType, title, xLabel, yLabel, yRef) " //newly added columns
+            + "(reportInstanceId, dataSourceName, pointName, dataType, startValue, textRenderer, colour, consolidatedChart, Title, xlabel, ylabel, yreference, type) "
             + "values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
     public static class PointInfo {
         private final DataPointVO point;
         private final String colour;
         private final boolean consolidatedChart;
-        //newly added properties
-        private boolean chartType;
-        private String title;
-        private String xlabel;
-        private String ylabel;
-        private double yref;
-    
 
-        public PointInfo(DataPointVO point, String colour, boolean consolidatedChart, boolean chartType, String title, String xlabel, String ylabel, double yref) {
+        private String title;
+        private String xLabel;
+        private String yLabel;
+        private double yReference;
+        // private ChartType type;
+        private String type;
+
+        public PointInfo(DataPointVO point, String colour, boolean consolidatedChart) {
             this.point = point;
             this.colour = colour;
             this.consolidatedChart = consolidatedChart;
-            this.chartType = chartType;
+        }
+
+        public PointInfo(DataPointVO point, String colour, boolean consolidatedChart, String title, String xLabel, String yLabel, double yReference, String type) {
+            this.point = point;
+            this.colour = colour;
+            this.consolidatedChart = consolidatedChart;
             this.title = title;
-            this.xlabel = xlabel;
-            this.ylabel = ylabel;
-            this.yref = yref;
+            this.xLabel = xLabel;
+            this.yLabel = yLabel;
+            this.yReference = yReference;
+            this.type = type;
         }
 
         public DataPointVO getPoint() {
@@ -234,31 +240,49 @@ public class ReportDao extends BaseDao {
             return colour;
         }
 
-        public boolean isConsolidatedChart() {
-            return consolidatedChart;
+        public void setChartType(String newType) {
+            this.type = newType;
         }
 
-        //new getter functions
-        public boolean isChartType() {
-            return chartType;
+        public String getChartType() {
+            return this.type;
         }
-    
+
         public String getTitle() {
             return title;
         }
 
-        public String getXlabel() {
-            return xlabel;
+        public void setTitle(String newLabel) {
+            this.title = newLabel;
         }
-    
-        public String getYlabel() {
-            return ylabel;
+
+        public String getXLabel() {
+            return xLabel;
         }
-    
-       public double getYref() {
-            return yref;
+
+        public void setXLabel(String newLabel) {
+            this.xLabel = newLabel;
         }
-    
+
+        public String getYLabel() {
+            return yLabel;
+        }
+
+        public void setYLabel(String newLabel) {
+            this.yLabel = newLabel;
+        }
+
+        public double getYReference() {
+            return yReference;
+        }
+
+        public void setYReference(double newReference) {
+            this.yReference = newReference;
+        }
+
+        public boolean isConsolidatedChart() {
+            return consolidatedChart;
+        }
     }
 
     public int runReport(final ReportInstance instance, List<PointInfo> points, ResourceBundle bundle) {
@@ -309,13 +333,15 @@ public class ReportDao extends BaseDao {
             // Insert the reportInstancePoints record
             String name = Functions.truncate(point.getName(), 100);
 
+            //pointInfo.setXLabel("forcing x via db");
+
             int reportPointId = doInsert(
                     REPORT_INSTANCE_POINTS_INSERT,
                     new Object[] { instance.getId(), point.getDeviceName(), name, dataType,
                             DataTypes.valueToString(startValue),
                             SerializationHelper.writeObject(point.getTextRenderer()), pointInfo.getColour(),
-                            boolToChar(pointInfo.isConsolidatedChart()),boolToChar(pointInfo.isChartType()), pointInfo.getTitle(), pointInfo.getXlabel(), pointInfo.getYlabel(), pointInfo.getYref()  }, new int[] { Types.INTEGER, Types.VARCHAR,
-                            Types.VARCHAR, Types.INTEGER, Types.VARCHAR, Types.BLOB, Types.VARCHAR, Types.CHAR, Types.CHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.DOUBLE }); //getters added
+                            boolToChar(pointInfo.isConsolidatedChart()), pointInfo.getTitle(), pointInfo.getXLabel(), pointInfo.getYLabel(), pointInfo.getYReference(), pointInfo.getChartType() }, new int[] { Types.INTEGER, Types.VARCHAR,
+                            Types.VARCHAR, Types.INTEGER, Types.VARCHAR, Types.BLOB, Types.VARCHAR, Types.CHAR, Types.VARCHAR, Types.VARCHAR, Types.VARCHAR, Types.REAL, Types.VARCHAR});
 
             // Insert the reportInstanceData records
             String insertSQL = "insert into reportInstanceData " + "  select id, " + reportPointId
@@ -449,79 +475,14 @@ public class ReportDao extends BaseDao {
      * ordered), and sorted by time ascending.
      */
     private static final String REPORT_INSTANCE_POINT_SELECT = "select id, dataSourceName, pointName, dataType, " // 
-            + "startValue, textRenderer, colour, consolidatedChart, chartType,title,xLabel,yLabel,yRef from reportInstancePoints "; //new properties added
+            + "startValue, textRenderer, colour, consolidatedChart, Title, xlabel, ylabel, yreference, type from reportInstancePoints ";
     private static final String REPORT_INSTANCE_DATA_SELECT = "select rd.pointValue, rda.textPointValueShort, " //
             + "  rda.textPointValueLong, rd.ts, rda.sourceValue "
             + "from reportInstanceData rd "
             + "  left join reportInstanceDataAnnotations rda on "
             + "      rd.pointValueId=rda.pointValueId and rd.reportInstancePointId=rda.reportInstancePointId ";
+
     public void reportInstanceData(int instanceId, final ReportDataStreamHandler handler) {
-                // Retrieve point information.
-                List<ReportPointInfo> pointInfos = query(REPORT_INSTANCE_POINT_SELECT + "where reportInstanceId=?",
-                        new Object[] { instanceId }, new GenericRowMapper<ReportPointInfo>() {
-                            public ReportPointInfo mapRow(ResultSet rs, int rowNum) throws SQLException {
-                                ReportPointInfo rp = new ReportPointInfo();
-                                rp.setReportPointId(rs.getInt(1));
-                                rp.setDeviceName(rs.getString(2));
-                                rp.setPointName(rs.getString(3));
-                                rp.setDataType(rs.getInt(4));
-                                String startValue = rs.getString(5);
-                                if (startValue != null)
-                                    rp.setStartValue(MangoValue.stringToValue(startValue, rp.getDataType()));
-                                rp.setTextRenderer((TextRenderer) SerializationHelper.readObject(rs.getBlob(6)
-                                        .getBinaryStream()));
-                                rp.setColour(rs.getString(7));
-                                rp.setConsolidatedChart(charToBool(rs.getString(8)));
-                                rp.setChartType(charToBool(rs.getString(9)));//new setter function added
-                                rp.setTitle(rs.getString(10));
-                                rp.setXlabel(rs.getString(11));
-                                rp.setYlabel(rs.getString(12));
-                                rp.setYref(rs.getDouble(13));
-                                return rp;
-                            }
-                        });
-        
-                final ReportDataValue rdv = new ReportDataValue();
-                for (final ReportPointInfo point : pointInfos) {
-                    handler.startPoint(point);
-        
-                    rdv.setReportPointId(point.getReportPointId());
-                    final int dataType = point.getDataType();
-                    ejt.query(REPORT_INSTANCE_DATA_SELECT + "where rd.reportInstancePointId=? order by rd.ts",
-                            new Object[] { point.getReportPointId() }, new RowCallbackHandler() {
-                                public void processRow(ResultSet rs) throws SQLException {
-                                    switch (dataType) {
-                                    case (DataTypes.NUMERIC):
-                                        rdv.setValue(new NumericValue(rs.getDouble(1)));
-                                        break;
-                                    case (DataTypes.BINARY):
-                                        rdv.setValue(new BinaryValue(rs.getDouble(1) == 1));
-                                        break;
-                                    case (DataTypes.MULTISTATE):
-                                        rdv.setValue(new MultistateValue(rs.getInt(1)));
-                                        break;
-                                    case (DataTypes.ALPHANUMERIC):
-                                        rdv.setValue(new AlphanumericValue(rs.getString(2)));
-                                        if (rs.wasNull())
-                                            rdv.setValue(new AlphanumericValue(rs.getString(3)));
-                                        break;
-                                    case (DataTypes.IMAGE):
-                                        rdv.setValue(new ImageValue(Integer.parseInt(rs.getString(2)), rs.getInt(1)));
-                                        break;
-                                    default:
-                                        rdv.setValue(null);
-                                    }
-        
-                                    rdv.setTime(rs.getLong(4));
-                                    rdv.setAnnotation(rs.getString(5));
-        
-                                    handler.pointData(rdv);
-                                }
-                            });
-                }
-                handler.done();
-            }
-    public void reportInstanceDataHorizontal(ResourceBundle bundle, int instanceId, final ReportCsvStreamer handler) {
         // Retrieve point information.
         List<ReportPointInfo> pointInfos = query(REPORT_INSTANCE_POINT_SELECT + "where reportInstanceId=?",
                 new Object[] { instanceId }, new GenericRowMapper<ReportPointInfo>() {
@@ -538,26 +499,28 @@ public class ReportDao extends BaseDao {
                                 .getBinaryStream()));
                         rp.setColour(rs.getString(7));
                         rp.setConsolidatedChart(charToBool(rs.getString(8)));
+
+                        rp.setTitle(rs.getString(9));
+                        rp.setXLabel(rs.getString(10));
+                        //rp.setXLabel("forced x in ReportDao");
+                        rp.setYLabel(rs.getString(11));
+                        rp.setYReference(Double.parseDouble(rs.getString(12)));
+                        //rp.setChartType(rs.getString(13));
+                        String type = rs.getString(13);
+                        rp.setType(type);
                         return rp;
                     }
                 });
-        
-        handler.addHeader(bundle,pointInfos.size()); //writing headers for each point
-        List<List<ReportDataValue>> rdv_list_list = new ArrayList<>();// creating a list of lists to store all the report data values
 
-        int max = 0;
+        final ReportDataValue rdv = new ReportDataValue();
+        for (final ReportPointInfo point : pointInfos) {
+            handler.startPoint(point);
 
-        for (final ReportPointInfo point : pointInfos) { // For every group
-            List<ReportDataValue> rdv_list = new ArrayList<>();
-
-            final int pointId = point.getReportPointId();
+            rdv.setReportPointId(point.getReportPointId());
             final int dataType = point.getDataType();
             ejt.query(REPORT_INSTANCE_DATA_SELECT + "where rd.reportInstancePointId=? order by rd.ts",
                     new Object[] { point.getReportPointId() }, new RowCallbackHandler() {
                         public void processRow(ResultSet rs) throws SQLException {
-                            
-                            ReportDataValue rdv = new ReportDataValue();
-                            rdv.setReportPointId(pointId);
                             switch (dataType) {
                             case (DataTypes.NUMERIC):
                                 rdv.setValue(new NumericValue(rs.getDouble(1)));
@@ -583,12 +546,10 @@ public class ReportDao extends BaseDao {
                             rdv.setTime(rs.getLong(4));
                             rdv.setAnnotation(rs.getString(5));
 
-                            rdv_list.add(rdv);//add rdv to list rdv_list
+                            handler.pointData(rdv);
                         }
-                    }
-            );
+                    });
         }
-        
         handler.done();
     }
 

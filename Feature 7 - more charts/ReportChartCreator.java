@@ -147,10 +147,7 @@ public class ReportChartCreator {
             if (ptsc.hasData()) {
                 if (inlinePrefix != null)
                     model.put("chartName", inlinePrefix + pointStat.getChartName());
-
-                                    
-                pointStat.setImageData(ImageChartUtils.getChartData(ptsc, POINT_IMAGE_WIDTH, POINT_IMAGE_HEIGHT, pointStat.isChartType(), pointStat.getTitle(), pointStat.getXlabel(), pointStat.getYlabel(), pointStat.getYref()));
-                //getchartData updated with all parameters
+                pointStat.setImageData(ImageChartUtils.getChartData(ptsc, POINT_IMAGE_WIDTH, POINT_IMAGE_HEIGHT, pointStat.getTitle(), pointStat.getXLabel(), pointStat.getYLabel(), pointStat.getYReference(), pointStat.getChartType()));
             }
         }
 
@@ -164,7 +161,7 @@ public class ReportChartCreator {
                 model.put("chartName", IMAGE_SERVLET + chartName);
             }
 
-            imageData = ImageChartUtils.getChartData(ptsc, true, IMAGE_WIDTH, IMAGE_HEIGHT);
+            imageData = ImageChartUtils.getChartData(ptsc, true, IMAGE_WIDTH, IMAGE_HEIGHT, "", "", "", 0, "1");
         }
 
         List<EventInstance> events = null;
@@ -286,15 +283,68 @@ public class ReportChartCreator {
         private Color numericTimeSeriesColor;
         private DiscreteTimeSeries discreteTimeSeries;
         private byte[] imageData;
-        //newly added properties
-        private boolean chartType;
+
         private String title;
-        private String xlabel;
-        private String ylabel;
-        private double yref;
+        private String xLabel;
+        private String yLabel;
+        private double yReference;
+        // private ChartType type;
+        private String type;
 
         public PointStatistics(int reportPointId) {
             this.reportPointId = reportPointId;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public void setChartType(String newType) {
+            this.type = newType;
+        }
+
+        public String getChartType() {
+            return this.type;
+        }
+
+        // public void setChartType(ChartType newType) {
+        //     this.type = newType;
+        // }
+
+        // public ChartType getChartType() {
+        //     return this.type;
+        // }
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String newLabel) {
+            this.title = newLabel;
+        }
+
+        public String getXLabel() {
+            return xLabel;
+        }
+
+        public void setXLabel(String newLabel) {
+            this.xLabel = newLabel;
+        }
+
+        public String getYLabel() {
+            return yLabel;
+        }
+
+        public void setYLabel(String newLabel) {
+            this.yLabel = newLabel;
+        }
+
+        public double getYReference() {
+            return yReference;
+        }
+
+        public void setYReference(double newReference) {
+            this.yReference = newReference;
         }
 
         public String getName() {
@@ -430,46 +480,6 @@ public class ReportChartCreator {
         public String getChartName() {
             return "reportPointChart" + reportPointId + ".png";
         }
-        //newly added getter and setter functions
-        public boolean isChartType() {
-            return chartType;
-        }
-    
-        public void setChartType(boolean chartType) {
-            this.chartType = chartType;
-        }
-    
-        public String getTitle() {
-            return title;
-        }
-    
-        public void setTitle(String title) {
-            this.title = title;
-        }    
-        
-        public String getXlabel() {
-            return xlabel;
-        }
-    
-        public void setXlabel(String xlabel) {
-            this.xlabel = xlabel;
-        }    
-        
-        public String getYlabel() {
-            return ylabel;
-        }
-    
-        public void setYlabel(String ylabel) {
-            this.ylabel = ylabel;
-        }
-        
-        public double getYref() {
-            return yref;
-        }
-    
-        public void setYref(double yref) {
-            this.yref = yref;
-        }        
     }
 
     public static class StartsAndRuntimeWrapper {
@@ -521,7 +531,7 @@ public class ReportChartCreator {
             try {
                 if (createExportFile) {
                     exportFile = File.createTempFile("tempCSV", ".csv");
-                    reportCsvStreamer = new ReportCsvStreamer(new PrintWriter(new FileWriter(exportFile)), bundle, true);
+                    reportCsvStreamer = new ReportCsvStreamer(new PrintWriter(new FileWriter(exportFile)), bundle);
                 }
             }
             catch (IOException e) {
@@ -549,11 +559,13 @@ public class ReportChartCreator {
             if (pointInfo.getStartValue() != null)
                 point.setStartValue(pointInfo.getTextRenderer().getText(pointInfo.getStartValue(),
                         TextRenderer.HINT_FULL));
-            point.setChartType(pointInfo.isChartType()); //newly addded properties
+
             point.setTitle(pointInfo.getTitle());
-            point.setXlabel(pointInfo.getXlabel());
-            point.setYlabel(pointInfo.getYlabel());
-            point.setYref(pointInfo.getYref());            
+            point.setXLabel(pointInfo.getXLabel());
+            point.setYLabel(pointInfo.getYLabel());
+            point.setYReference(pointInfo.getYReference());
+            point.setChartType(pointInfo.getChartType());
+
             pointStatistics.add(point);
 
             Color colour = null;

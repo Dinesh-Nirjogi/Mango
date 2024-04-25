@@ -8,16 +8,16 @@ import java.io.Serializable;
 import com.serotonin.util.SerializationHelper;
 
 public class ReportPointVO implements Serializable {
+
     private int pointId;
     private String colour;
-    private boolean consolidatedChart;
-    //newly added properties
-    private boolean chartType;
+    private String xLabel;
+    private String yLabel;
     private String title;
-    private String xlabel;
-    private String ylabel;
-    private double yref;
-
+    //private ChartType type;
+    private String type;
+    private float yReference;
+    private boolean consolidatedChart;
 
     public int getPointId() {
         return pointId;
@@ -25,6 +25,58 @@ public class ReportPointVO implements Serializable {
 
     public void setPointId(int pointId) {
         this.pointId = pointId;
+    }
+
+    // public void setChartType(ChartType newType) {
+    //     this.type = newType;
+    // }
+
+    // public ChartType getChartType() {
+    //     return this.type;
+    // }
+
+    public void setChartType(String type) {
+        this.type = type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getChartType() {
+        return this.type;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String newLabel) {
+        this.title = newLabel;
+    }
+
+    public String getXLabel() {
+        return xLabel;
+    }
+
+    public void setxLabel(String newLabel) {
+        this.xLabel = newLabel;
+    }
+
+    public String getYLabel() {
+        return yLabel;
+    }
+
+    public void setyLabel(String newLabel) {
+        this.yLabel = newLabel;
+    }
+
+    public float getYReference() {
+        return yReference;
+    }
+
+    public void setyReference(float newReference) {
+        this.yReference = newReference;
     }
 
     public String getColour() {
@@ -43,46 +95,6 @@ public class ReportPointVO implements Serializable {
         this.consolidatedChart = consolidatedChart;
     }
 
-    //newly added getter and setter functions
-    public boolean isChartType() {
-        return chartType;
-    }
-
-    public void setChartType(boolean chartType) {
-        this.chartType = chartType;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }    
-    
-    public String getXlabel() {
-        return xlabel;
-    }
-
-    public void setXlabel(String xlabel) {
-        this.xlabel = xlabel;
-    }    
-    
-    public String getYlabel() {
-        return ylabel;
-    }
-
-    public void setYlabel(String ylabel) {
-        this.ylabel = ylabel;
-    }
-    
-    public double getYref() {
-        return yref;
-    }
-
-    public void setYref(double yref) {
-        this.yref = yref;
-    }
     //
     //
     // Serialization

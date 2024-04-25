@@ -177,13 +177,13 @@ public class ReportsDwr extends BaseDwr {
             boolean includeUserComments, int dateRangeType, int relativeDateType, int previousPeriodCount,
             int previousPeriodType, int pastPeriodCount, int pastPeriodType, boolean fromNone, int fromYear,
             int fromMonth, int fromDay, int fromHour, int fromMinute, boolean toNone, int toYear, int toMonth,
-            int toDay, int toHour, int toMinute, boolean email, boolean includeData, boolean zipData,
+            int toDay, int toHour, int toMinute, boolean email, boolean includeData, boolean zipData, 
             List<RecipientListEntryBean> recipients) {
         DwrResponseI18n response = new DwrResponseI18n();
 
         // Basic validation
         validateData(response, name, points, dateRangeType, relativeDateType, previousPeriodCount, pastPeriodCount);
- 
+
         if (!response.getHasMessages()) {
             ReportVO report = new ReportVO();
             report.setName(name);
